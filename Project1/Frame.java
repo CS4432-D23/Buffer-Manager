@@ -6,9 +6,9 @@ import java.io.IOException;
 
 public class Frame {
 
-   private String[] content = new String[99]; // 100 records per file, store 1 file per frame
+   private String[] content = new String[100]; // 100 records per file, store 1 file per frame
    private Boolean dirty; // has the file been modiftied?
-   private int blockID; // page number of the file
+   private int blockID; // file number
    private boolean isPinned; // is the file pinned?
 
    public Frame() {
@@ -17,9 +17,9 @@ public class Frame {
       this.isPinned = false;
    }
 
-   public void setContent(int recordNumber) {
+   public void setContent(int fileNumber) {
 
-      String fileName = "F" + recordNumber + ".txt";
+      String fileName = "F" + fileNumber + ".txt";
 
       try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
          StringBuilder sb = new StringBuilder();
@@ -32,15 +32,15 @@ public class Frame {
          }
    
          String[] sentences = sb.toString().split("\\.");
-   
-         // Print each sentence on a new line
-         for (String sentence : sentences) {
-           System.out.println(sentence.trim());
-         }
-
          this.content = sentences;
+   
+         // // Print each sentence on a new line
+         // for (String sentence : sentences) {
+         //   System.out.println(sentence.trim());
+         // }
 
-         System.out.println(content[99]);
+
+         // System.out.println(content[99]);
 
        } catch (IOException e) {
          System.err.format("IOException: %s%n", e);
@@ -48,7 +48,7 @@ public class Frame {
    }
 
    public String getRecord(int recordNumber) {
-      return this.content[recordNumber];
+      return this.content[recordNumber - 1]; // return the record at the given record number
    }
 
    public void updateRecord(int recordNumber, String updatedRecord) {
@@ -63,6 +63,10 @@ public class Frame {
 
    public int getBlockID() {
       return this.blockID;
+   }
+
+   public void setBlockID(int blockID) {
+      this.blockID = blockID;
    }
 
    public void setPageNumber(int blockID) {
