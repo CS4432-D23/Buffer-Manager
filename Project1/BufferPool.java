@@ -9,6 +9,7 @@ public class BufferPool {
     private Frame[] frames; // the buffer pool frames
     private int numFrames; // the number of frames in the buffer pool
     private int numPinned; // the number of pinned frames in the buffer pool
+    private int lastEvicted; // the index of the last evicted frame
     
     /**
      * Private constructor to prevent instantiation.
@@ -49,9 +50,9 @@ public class BufferPool {
 
     
     /**
-     * brings the specified blockID into the buffer pool
-     * @param recordNumber the record number to bring into the buffer pool
-     * @return the frame number of the frame that contains the blockID
+     * brings the specified record number to the buffer pool
+     * @param recordNumber the record number to bring to the buffer pool
+     * @return the frame number and line number of the record number
      */
     public int[] bringToBuffer(int recordNumber) {
 
@@ -79,8 +80,7 @@ public class BufferPool {
 
                 // if there are no unpinned frames, return BUFFER FULL (implement LRU if theres time here)
                 if (frameNumber == -1) {
-                    System.out.println("CANNOT ACCESS RECORD " + recordNumber + "FROM DISK BUFFER FULL");
-                    return new int[] {-1, -1};
+                    return new int[] {-1, -1}; // BUFFER FULL
                 } else { // if there is an unpinned frame, load the blockID into the frame
                     System.out.println("Evicting frame unpinned frame: " + frameNumber);
                     frames[frameNumber].readFile(blockID);
@@ -95,7 +95,8 @@ public class BufferPool {
         } else {
             System.out.println("No Frame Eviction :)");
         }
-        return new int[] {frameNumber, lineNumber};
+        lastEvicted = frameNumber;
+        return new int[] {frameNumber, lineNumber}; 
     }
 
     /**
@@ -111,6 +112,10 @@ public class BufferPool {
         }
 
         int values[] = bringToBuffer(recordNumber);
+
+        if(values[0] == -1 && values[1] == -1) {
+            return "CANNOT ACCESS RECORD " + recordNumber + " FROM DISK, BUFFER FULL";
+        }
 
         System.out.println("Stored in Frame Number: " + values[0]);
         
@@ -136,7 +141,7 @@ public class BufferPool {
      * returns an empty frame
      * @return the frame number of an empty frame, -1 if there are no empty frames
      */
-    public int getEmptyFrame() {
+    public int getEmptyFrame(int lastEvicted) {
         for (int i = 0; i < numFrames; i++) { // start from the beginning and write to the first empty frame
             if (frames[i].getBlockID() == -1) {
                 return i;
@@ -178,6 +183,10 @@ public class BufferPool {
         int frameNumber = values[0];
         int lineNumber = values[1];
 
+        if(values[0] == -1 && values[1] == -1) {
+            return "CANNOT ACCESS RECORD " + recordNumber + " FROM DISK, BUFFER FULL";
+        }
+
         System.out.println("Stored in Frame Number: " + frameNumber);
         System.out.println("Line Number Changed: " + lineNumber);
 
@@ -187,21 +196,66 @@ public class BufferPool {
     }
     
 
-    public void pin(int pageNumber) {
-        for (int i = 0; i < numFrames; i++) {
-            if (frames[i].getBlockID() == pageNumber) {
-                frames[i].pin();
+    /**
+     * pin a specific page number in the buffer
+     * 
+     * @param pageNumber the page number to pin
+     * @return string indicating success or failure
+     */
+    public String pin(int pageNumber) {
+
+        // check if pageNumber is valid
+        if (pageNumber > 7 || pageNumber < 1) {
+            return "INVALID PAGE NUMBER";
+        }
+        
+        // bring the page to the buffer
+        int[] values = bringToBuffer(pageNumber * 100);
+
+        // System.out.println(values[0]);
+
+        // CASE 3 if the buffer is full, return BUFFER FULL
+        if (values[0] == -1 && values[1] == -1) {
+            return "CANNOT PIN PAGE NUMBER " + pageNumber + " FROM DISK, BUFFER FULL";
+        } else { // if the buffer is not full, pin the frame
+            // CASE the frame is already pinned
+            if (frames[values[0]].isPinned()) {
+                return "PAGE " + values[0] + " ALREADY PINNED";
+            }
+            else {
+                // CASE pin the frame
+                frames[values[0]].pin();
                 numPinned++;
+                return "Pinned Frame: " + values[0];
             }
         }
+
     }
-    public void unpin(int pageNumber) {
-        for (int i = 0; i < numFrames; i++) {
+
+    /**
+     * unpin a specific page number in the buffer
+     * @param pageNumber the page number to unpin
+     */ 
+    public String unpin(int pageNumber) {
+            
+        // check if pageNumber is valid
+        if (pageNumber > 7 || pageNumber < 1) {
+            return "INVALID PAGE NUMBER";
+        }
+
+        for (int i = 0; i < frames.length; i++) {
             if (frames[i].getBlockID() == pageNumber) {
-                frames[i].unpin();
-                numPinned--;
+                if (!frames[i].isPinned()) {
+                    return "PAGE " + pageNumber + " ALREADY UNPINNED";
+                } else {
+                    frames[i].unpin();
+                    numPinned--;
+                    return "Unpinned Frame: " + i;
+                }
             }
         }
+        return "What kind of edge case is this";
+
     }
 
     private void updateNumberOfPins() {
