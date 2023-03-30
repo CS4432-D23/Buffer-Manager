@@ -1,5 +1,7 @@
 # Buffer-Manager
 
+An implementation a simplified version of DBMS buffer manager
+
 ## Section 1: How to compile and execute my code  
 
 1. Put data blocks in the same directory as `Main`, `BufferPool`, and `Frame` classes
