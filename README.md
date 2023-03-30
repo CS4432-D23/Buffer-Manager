@@ -1,7 +1,6 @@
 # Buffer-Manager
 
 **Name:** `William Huang`  
-**WPI ID:** `876998229`
 
 ## Section 1: How to compile and execute my code  
 
