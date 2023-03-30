@@ -5,9 +5,10 @@
 
 ## Section 1: How to compile and execute my code  
 
-1. Run the `main` class in Project1 folder
-2. Input number of buffers
-3. Type the command you like to run
+1. Put data blocks in the same directory as `Main`, `BufferPool`, and `Frame` classes
+2. Run the `main` class (in Project1 folder)
+3. Input number of buffers
+4. Type the command you like to run
 
 Here are the list of commands you can run:
 - `GET {Record Number}` : Loads block from disk to buffer (if not already) and outputs the record at {Record Number}
