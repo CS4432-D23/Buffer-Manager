@@ -15,6 +15,7 @@ public class main {
     BufferPool bufferPool = BufferPool.initalize(numFrames);
     sc.nextLine();
 
+    
     while (true) {
 
       System.out.println("");
@@ -53,6 +54,8 @@ public class main {
       }
 
       else if (command[0].toUpperCase().equals("EXIT") && command.length == 1) {
+        System.out.println("EXITING PROGRAM");
+        bufferPool.flushAll();
         break;
       } else {
         System.out.println("INVALID COMMAND - TRY AGAIN");
@@ -64,6 +67,9 @@ public class main {
 
   }
 
+  /**
+   * Check the current directory for files and directories
+   */
   public static void checkFileDir() {
 
     File currentDir = new File(".");

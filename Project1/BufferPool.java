@@ -54,7 +54,7 @@ public class BufferPool {
      * @param recordNumber the record number to bring to the buffer pool
      * @return the frame number and line number of the record number
      */
-    public int[] bringToBuffer(int recordNumber) {
+    private int[] bringToBuffer(int recordNumber) {
 
         // calculate the filenumber (blockID) depending on the recordNumber (edge cases)
         int blockID = (recordNumber % 100 == 0) ? (recordNumber / 100) : (recordNumber / 100) + 1;
@@ -82,20 +82,21 @@ public class BufferPool {
                 if (frameNumber == -1) {
                     return new int[] {-1, -1}; // BUFFER FULL
                 } else { // if there is an unpinned frame, load the blockID into the frame
-                    System.out.println("Evicting frame unpinned frame: " + frameNumber);
+                    // System.out.println("Evicting frame unpinned frame: " + frameNumber);
                     frames[frameNumber].readFile(blockID);
                     frames[frameNumber].setBlockID(blockID);
                 }
             } else { // if there is an empty frame, load the blockID into the frame
 
-                System.out.println("Evicting empty frame: " + frameNumber);
+                // System.out.println("Evicting empty frame: " + frameNumber);
                 frames[frameNumber].readFile(blockID);
                 frames[frameNumber].setBlockID(blockID);
             }
             lastEvicted = frameNumber; // set the last evicted frame to the frame number
-            System.out.println("Last Evicted Frame: " + lastEvicted);
+            // System.out.println("Last Evicted Frame: " + lastEvicted);
+            System.out.println("Block " + blockID + " loaded into frame " + frameNumber);
         } else {
-            System.out.println("No Frame Eviction :)");
+            System.out.println("Block " + blockID + " already in buffer in frame " + frameNumber);
         }
         return new int[] {frameNumber, lineNumber}; 
     }
@@ -104,7 +105,7 @@ public class BufferPool {
      * returns an empty frame
      * @return the frame number of an empty frame, -1 if there are no empty frames
      */
-    public int getEmptyFrame() {
+    private int getEmptyFrame() {
         for (int i = 0; i < numFrames; i++) { // start from the beginning and write to the first empty frame
             if (frames[i].getBlockID() == -1) {
                 return i;
@@ -117,24 +118,38 @@ public class BufferPool {
      * returns an unpinned frame
      * @return the frame number of an unpinned frame, -1 if there are no unpinned frames
      */
-    public int getUnpinnedFrame() {
+    private int getUnpinnedFrame() {
         // if the last evicted frame is the last frame, set it to the first frame
         lastEvicted = (lastEvicted == numFrames - 1) ? 0 : lastEvicted + 1; 
         for (int i = lastEvicted; i < numFrames + (numFrames - lastEvicted); i++) {
             int j = i % numFrames;
-            System.out.println("Checking frame " + j);
+            // System.out.println("Checking frame " + j);
             if (!frames[j].isPinned()) {
                 if (!frames[j].isDirty()) {
                     return i;
                 }
                 else {
-                    System.out.println("Writing frame " + j + " to disk");
+                    // System.out.println("Writing frame " + j + " to disk");
                     frames[j].writeFile();
                     frames[j].setDirty(false);
                     return i;
                 }
             }
         } 
+        return -1;
+    }
+
+    /**
+     * check buffers to see if the blockID is in the buffer
+     * @param blockID the blockID to check for
+     * @return the frame number if the blockID is in the buffer, -1 if not
+     */
+    private int inBuffer(int blockID) {
+        for (int i = 0; i < numFrames; i++) {
+            if (frames[i].getBlockID() == blockID) {
+                return i;
+            }
+        }
         return -1;
     }
 
@@ -156,24 +171,10 @@ public class BufferPool {
             return "CANNOT ACCESS RECORD " + recordNumber + " FROM DISK, BUFFER FULL";
         }
 
-        System.out.println("Stored in Frame Number: " + values[0]);
+        // System.out.println("Stored in Frame Number: " + values[0]);
         
         // return the record at the specified record number
         return frames[values[0]].getRecord(values[1]);
-    }
-
-    /**
-     * check buffers to see if the blockID is in the buffer
-     * @param blockID the blockID to check for
-     * @return the frame number if the blockID is in the buffer, -1 if not
-     */
-    public int inBuffer(int blockID) {
-        for (int i = 0; i < numFrames; i++) {
-            if (frames[i].getBlockID() == blockID) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     /**
@@ -197,12 +198,12 @@ public class BufferPool {
             return "CANNOT ACCESS RECORD " + recordNumber + " FROM DISK, BUFFER FULL";
         }
 
-        System.out.println("Stored in Frame Number: " + frameNumber);
-        System.out.println("Line Number Changed: " + lineNumber);
+        // System.out.println("Stored in Frame Number: " + frameNumber);
+        // System.out.println("Line Number Changed: " + lineNumber);
 
         frames[frameNumber].setRecord(lineNumber, edittedRecord); // edit the record
         
-        return "SUCCESSFULLY SET RECORD";
+        return "SUCCESSFULLY WRITTEN RECORD";
     }
     
 
@@ -230,7 +231,7 @@ public class BufferPool {
         } else { // if the buffer is not full, pin the frame
             // CASE the frame is already pinned
             if (frames[values[0]].isPinned()) {
-                return "PAGE " + values[0] + " ALREADY PINNED";
+                return "PAGE " + pageNumber + " ALREADY PINNED";
             }
             else {
                 // CASE pin the frame
@@ -260,14 +261,30 @@ public class BufferPool {
                 } else {
                     frames[i].unpin();
                     numPinned--;
-                    return "Unpinned Frame: " + i;
+                    return "UNPINNED FRAME: " + i;
                 }
             }
         }
-        return "What kind of edge case is this";
+        return "BLOCK " + pageNumber + " CANNOT BE UNPINNED BECAUSE NOT IN BUFFER";
 
     }
 
+    /**
+     * flushes all dirty pages to disk
+     */
+    public void flushAll() {
+        for (int i = 0; i < numFrames; i++) {
+            if (frames[i].isDirty()) {
+                frames[i].writeFile();
+                frames[i].setDirty(false);
+            }
+        }
+        System.out.println("ALL DIRTY PAGES FLUSHED TO DISK");
+    }
+
+    /**
+     * updates the number of pinned frames in the buffer (never used)
+     */
     private void updateNumberOfPins() {
         for (int i = 0; i < numFrames; i++) {
             int numberOfPins = 0;

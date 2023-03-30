@@ -86,15 +86,6 @@ public class Frame {
    }
    
    /**
-    * Print the contents of the Frame
-    */
-   public void printContents() {
-      for (String record : content) {
-         System.out.println(record);
-      }
-   }
-
-   /**
     * Set the record at the given record number
     * @param recordNumber the record number to set
     * @param newRecord the new record to set
@@ -123,40 +114,56 @@ public class Frame {
       this.dirty = true;
    }
 
-
-   public String[] getContent() {
-      return this.content;
-   }
-
-
+   /**
+    * get the block ID
+    * @return the block ID
+    */
    public int getBlockID() {
       return this.blockID;
    }
 
+   /**
+    * set the block ID
+    * @param blockID the block ID to set
+    */
    public void setBlockID(int blockID) {
       this.blockID = blockID;
    }
 
-   public void setPageNumber(int blockID) {
-      this.blockID = blockID;
-   }
-
+   /**
+    * Check if the Frame is dirty
+    * @return true if the Frame is dirty, false otherwise
+    */
    public Boolean isDirty() {
       return this.dirty;
    }
 
+   /**
+    * Set the Frame to dirty
+    * @param dirty the dirty value to set
+    */
    public void setDirty(Boolean dirty) {
       this.dirty = dirty;
    }
 
+   /**
+    * Check if the Frame is pinned
+    * @return true if the Frame is pinned, false otherwise
+    */
    public boolean isPinned() {
       return this.isPinned;
    }
 
+   /**  
+    * Set the Frame to pinned
+    */
    public void pin() {
       this.isPinned = true;
    }
 
+   /**
+    * Set the Frame to unpinned
+    */
    public void unpin() {
       this.isPinned = false;
    }
