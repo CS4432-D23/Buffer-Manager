@@ -92,11 +92,50 @@ public class BufferPool {
                 frames[frameNumber].readFile(blockID);
                 frames[frameNumber].setBlockID(blockID);
             }
+            lastEvicted = frameNumber; // set the last evicted frame to the frame number
+            System.out.println("Last Evicted Frame: " + lastEvicted);
         } else {
             System.out.println("No Frame Eviction :)");
         }
-        lastEvicted = frameNumber;
         return new int[] {frameNumber, lineNumber}; 
+    }
+
+    /**
+     * returns an empty frame
+     * @return the frame number of an empty frame, -1 if there are no empty frames
+     */
+    public int getEmptyFrame() {
+        for (int i = 0; i < numFrames; i++) { // start from the beginning and write to the first empty frame
+            if (frames[i].getBlockID() == -1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * returns an unpinned frame
+     * @return the frame number of an unpinned frame, -1 if there are no unpinned frames
+     */
+    public int getUnpinnedFrame() {
+        // if the last evicted frame is the last frame, set it to the first frame
+        lastEvicted = (lastEvicted == numFrames - 1) ? 0 : lastEvicted + 1; 
+        for (int i = lastEvicted; i < numFrames + (numFrames - lastEvicted); i++) {
+            int j = i % numFrames;
+            System.out.println("Checking frame " + j);
+            if (!frames[j].isPinned()) {
+                if (!frames[j].isDirty()) {
+                    return i;
+                }
+                else {
+                    System.out.println("Writing frame " + j + " to disk");
+                    frames[j].writeFile();
+                    frames[j].setDirty(false);
+                    return i;
+                }
+            }
+        } 
+        return -1;
     }
 
     /**
@@ -138,40 +177,11 @@ public class BufferPool {
     }
 
     /**
-     * returns an empty frame
-     * @return the frame number of an empty frame, -1 if there are no empty frames
+     * set method that sets the record at the specified record number to the specified record
+     * @param recordNumber the record number to set
+     * @param edittedRecord the record to set the record at the specified record number to
+     * @return sucess or failure message
      */
-    public int getEmptyFrame(int lastEvicted) {
-        for (int i = 0; i < numFrames; i++) { // start from the beginning and write to the first empty frame
-            if (frames[i].getBlockID() == -1) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * returns an unpinned frame
-     * @return the frame number of an unpinned frame, -1 if there are no unpinned frames
-     */
-    public int getUnpinnedFrame() {
-        for (int i = 0; i < numFrames; i++) {
-            if (!frames[i].isPinned()) {
-                if (!frames[i].isDirty()) {
-                    return i;
-                }
-                else {
-                    System.out.println("Writing frame " + i + " to disk");
-                    frames[i].writeFile();
-                    frames[i].setDirty(false);
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    // TODO, edit content in frame, set dirty bit to true, and write to disk
     public String set(int recordNumber, String edittedRecord) { 
 
          // check if recordNumber is valid
