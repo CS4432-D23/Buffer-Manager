@@ -26,7 +26,7 @@ All of the test cases in the `testcase_commands_and_output.txt` work as intended
 There were some things I implemented in the program that were beyond the design guidelines. Some of which included:
 
 - A `SHOW` command which list of all current frames, their blockID's, pinned and dirty flag. This was for mostly debugging purposes to show what was currently in the buffer
-- A `EXIT` command which writes any blocks to disk (with dirty flag = true) and exits the program]. This was created for a way to exit the program and save the data in the buffer
+- A `EXIT` command which writes any blocks to disk (with dirty flag = true) and exits the program. This was created for a way to exit the program and save the data in the buffer
 - In the `BufferPool` class, I added a `numPinned` class variable and the `updateNumberOfPins()` method which never gets used (you can find them in the `BufferPool` class)
 - I also made the 'BufferPool' class into a singleton to avoid multiple instances of it
 
