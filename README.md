@@ -1,7 +1,5 @@
 # Buffer-Manager
 
-**Name:** `William Huang`  
-
 ## Section 1: How to compile and execute my code  
 
 1. Put data blocks in the same directory as `Main`, `BufferPool`, and `Frame` classes
